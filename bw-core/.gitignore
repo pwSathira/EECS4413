@@ -1,0 +1,11 @@
+# Add .env to .gitignore
+.env
+
+# Add .venv to .gitignore
+.venv
+
+# Add .vscode to .gitignore
+.vscode
+
+# Add __pycache__ to .gitignore
+__pycache__

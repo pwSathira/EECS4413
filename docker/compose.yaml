@@ -1,0 +1,55 @@
+services:
+  bidwize-core:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../bw-core:/opt/app
+    environment:
+      - DATABASE_URL=postgresql://bidwize_user:bidwize_password@postgres:5432/bidwize_db
+      - PYTHONPATH=/opt/app
+    depends_on:
+      - postgres
+    networks:
+      - bidwize
+
+  bidwize-web:
+    build:
+      context: ../bw-web
+      dockerfile: ../docker/frontend/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../bw-web:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - bidwize-core
+    networks:
+      - bidwize
+
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: bidwize_user
+      POSTGRES_PASSWORD: bidwize_password
+      POSTGRES_DB: bidwize_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - bidwize
+
+networks:
+  bidwize:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
