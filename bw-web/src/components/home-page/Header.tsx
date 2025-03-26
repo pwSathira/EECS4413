@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export function Header() {
+  const router = useRouter();
+
   return (
     <header className="w-full border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -40,10 +45,19 @@ export function Header() {
 
         {/* Auth Buttons */}
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => router.push('/login')}
+          >
             Log in
           </Button>
-          <Button size="sm">Sign up</Button>
+          <Button 
+            size="sm"
+            onClick={() => router.push('/sign-up')}
+          >
+            Sign up
+          </Button>
         </div>
       </div>
     </header>

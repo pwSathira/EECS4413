@@ -1,5 +1,5 @@
   import axios from "axios";
-  import { Auction, Item, AuctionWithItem } from "@/app/types/auction";
+  import { Auction, Item, AuctionWithItem } from "@/types/auction";
   
   const API_BASE_URL = "http://localhost:8000/api/v1";
   

@@ -10,6 +10,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://bidwize_user:bidwize_password@postgres:5432/bidwize_db
       - PYTHONPATH=/opt/app
+      - CORS_ORIGINS=http://localhost:3000
     depends_on:
       - postgres
     networks:

@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
+import { Header } from "../components/home-page/Header";
+import { Footer } from "../components/home-page/Footer";
 import { useEffect, useState } from "react";
-import { AuctionWithItem } from "./types/auction";
-import { fetchAuctionsWithItems } from "./api/auction-api";
+import { AuctionWithItem } from "../types/auction";
+import { fetchAuctionsWithItems } from "../api/auction-api";
 
 export default function Home() {
   const [auctions, setAuctions] = useState<AuctionWithItem[]>([]);
