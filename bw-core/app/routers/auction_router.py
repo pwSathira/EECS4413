@@ -122,98 +122,192 @@ def process_ended_auctions_route(background_tasks: BackgroundTasks, db: Session 
 
 @router.post("/create-sample", response_model=dict, tags=["development"])
 def create_sample_auction(db: Session = Depends(get_db)):
-    """Creates a sample ended auction with a seller, item, and multiple bids for testing"""
+    """Creates multiple sample auctions with sellers, items, and bids for testing"""
     
-    # Create a seller
-    seller = User(
-        username="sample_seller",
-        email="seller@example.com",
-        password="sample_password",
-        is_active=True,
-        is_admin=False,
-        role="seller",
-        street="123 Seller St",
-        city="Seller City",
-        country="Seller Country",
-        postal_code="12345"
-    )
-    db.add(seller)
+    # Create sellers
+    sellers = [
+        User(
+            username=f"seller_{i}",
+            email=f"seller{i}@example.com",
+            password="sample_password",
+            is_active=True,
+            is_admin=False,
+            role="seller",
+            street=f"{i}23 Seller St",
+            city="Seller City",
+            country="Seller Country",
+            postal_code=f"1234{i}"
+        ) for i in range(1, 4)
+    ]
+    for seller in sellers:
+        db.add(seller)
     db.flush()
 
-    # Create a bidder
-    bidder = User(
-        username="sample_bidder",
-        email="bidder@example.com",
-        password="sample_password",
-        is_active=True,
-        is_admin=False,
-        role="buyer",
-        street="456 Bidder St",
-        city="Bidder City",
-        country="Bidder Country",
-        postal_code="67890"
-    )
-    db.add(bidder)
+    # Create bidders
+    bidders = [
+        User(
+            username=f"bidder_{i}",
+            email=f"bidder{i}@example.com",
+            password="sample_password",
+            is_active=True,
+            is_admin=False,
+            role="buyer",
+            street=f"{i}56 Bidder St",
+            city="Bidder City",
+            country="Bidder Country",
+            postal_code=f"5678{i}"
+        ) for i in range(1, 4)
+    ]
+    for bidder in bidders:
+        db.add(bidder)
     db.flush()
+
+    # Sample items data
+    items_data = [
+        {
+            "name": "Vintage Camera",
+            "description": "A rare 1960s Leica M3 in excellent condition",
+            "initial_price": 500.0,
+            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+        },
+        {
+            "name": "Gaming Console",
+            "description": "Latest generation gaming console, sealed in box",
+            "initial_price": 400.0,
+            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+        },
+        {
+            "name": "Antique Watch",
+            "description": "1940s Swiss mechanical watch, recently serviced",
+            "initial_price": 300.0,
+            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+        },
+        {
+            "name": "Art Print",
+            "description": "Limited edition print, signed by the artist",
+            "initial_price": 200.0,
+            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+        },
+        {
+            "name": "Collectible Cards",
+            "description": "Complete set of rare trading cards",
+            "initial_price": 150.0,
+            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+        }
+    ]
+
+
+    # Create items
+    items = []
+    for i, item_data in enumerate(items_data):
+        item = Item(
+            **item_data,
+            user_id=sellers[i % len(sellers)].id
+        )
+        db.add(item)
+        items.append(item)
+    db.flush()
+
+    # Create auctions with different states
+    now = datetime.utcnow()
+    auctions_data = []
     
-    # Create an item with a non-null initial_price value
-    item = Item(
-        name="Sample Item",
-        description="A test item for the sample auction",
-        initial_price=100.0,
-        user_id=seller.id,
-        image_url="https://via.placeholder.com/150",
-    )
-    db.add(item)
+    # Ended auction with winner
+    auctions_data.append({
+        "start_date": now - timedelta(days=2),
+        "end_date": now - timedelta(hours=1),
+        "min_bid_increment": 10.0,
+        "item_id": items[0].id,
+        "user_id": sellers[0].id,
+        "is_active": False
+    })
+
+    # Active auction ending soon
+    auctions_data.append({
+        "start_date": now - timedelta(days=1),
+        "end_date": now + timedelta(hours=2),
+        "min_bid_increment": 20.0,
+        "item_id": items[1].id,
+        "user_id": sellers[1].id,
+        "is_active": True
+    })
+
+    # Active auction with plenty of time
+    auctions_data.append({
+        "start_date": now - timedelta(hours=12),
+        "end_date": now + timedelta(days=3),
+        "min_bid_increment": 15.0,
+        "item_id": items[2].id,
+        "user_id": sellers[2].id,
+        "is_active": True
+    })
+
+    # Future auction
+    auctions_data.append({
+        "start_date": now + timedelta(days=1),
+        "end_date": now + timedelta(days=4),
+        "min_bid_increment": 25.0,
+        "item_id": items[3].id,
+        "user_id": sellers[0].id,
+        "is_active": True
+    })
+
+    # Active auction with no bids yet
+    auctions_data.append({
+        "start_date": now - timedelta(hours=6),
+        "end_date": now + timedelta(days=2),
+        "min_bid_increment": 30.0,
+        "item_id": items[4].id,
+        "user_id": sellers[1].id,
+        "is_active": True
+    })
+
+    created_auctions = []
+    for auction_data in auctions_data:
+        auction = Auction(**auction_data)
+        db.add(auction)
+        created_auctions.append(auction)
     db.flush()
 
-    # Create an auction that ended 1 hour ago
-    end_time = datetime.utcnow() - timedelta(hours=1)
-    start_time = end_time - timedelta(days=1)
-    
-    auction = Auction(
-        start_date=start_time,
-        end_date=end_time,
-        min_bid_increment=10.0,
-        item_id=item.id,
-        user_id=seller.id,
-        is_active=False,  # Auction ended
-        winning_bid_id=None,
-    )
-    db.add(auction)
+    # Add bids to some auctions
+    bids_data = [
+        # Bids for ended auction
+        {"auction_idx": 0, "amounts": [550.0, 600.0, 650.0]},
+        # Bids for active auction ending soon
+        {"auction_idx": 1, "amounts": [450.0, 500.0]},
+        # Bids for active auction with plenty of time
+        {"auction_idx": 2, "amounts": [350.0]},
+    ]
+
+    created_bids = []
+    for bid_set in bids_data:
+        auction = created_auctions[bid_set["auction_idx"]]
+        for i, amount in enumerate(bid_set["amounts"]):
+            bidder = bidders[i % len(bidders)]
+            bid = Bid(
+                amount=amount,
+                bidder_name=bidder.username,
+                bidder_email=bidder.email,
+                user_id=bidder.id,
+                auction_id=auction.id,
+                created_at=auction.start_date + timedelta(hours=i+1)
+            )
+            db.add(bid)
+            created_bids.append(bid)
     db.flush()
 
-    # Create some bids with the required bidder_name and bidder_email
-    bid1 = Bid(
-        amount=120.0,
-        bidder_name=bidder.username,
-        bidder_email=bidder.email,
-        user_id=bidder.id,
-        auction_id=auction.id,
-        created_at=start_time + timedelta(hours=2)
-    )
-    db.add(bid1)
+    # Set winning bid for ended auction
+    ended_auction = created_auctions[0]
+    ended_auction.winning_bid_id = created_bids[2].id  # Highest bid for first auction
+    ended_auction.is_active = False
 
-    winning_bid = Bid(
-        amount=150.0,
-        bidder_name=bidder.username,
-        bidder_email=bidder.email,
-        user_id=bidder.id,
-        auction_id=auction.id,
-        created_at=start_time + timedelta(hours=4)
-    )
-    db.add(winning_bid)
-    db.flush()
-
-    # Set the winning bid for the auction
-    auction.winning_bid_id = winning_bid.id
     db.commit()
 
     return {
-        "message": "Sample auction created successfully",
-        "auction_id": auction.id,
-        "seller_id": seller.id,
-        "bidder_id": bidder.id,
-        "winning_bid_id": winning_bid.id,
-        "item_id": item.id
+        "message": "Sample auctions created successfully",
+        "auctions_created": len(created_auctions),
+        "items_created": len(items),
+        "bids_created": len(created_bids),
+        "sellers_created": len(sellers),
+        "bidders_created": len(bidders)
     }
