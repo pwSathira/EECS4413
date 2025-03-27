@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import React from "react";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
+import { UserProvider } from "@/contexts/UserContext";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "BidWize - Online Auction Platform",
+  description: "A modern online auction platform for buying and selling items",
+};
 
 export default function RootLayout({
   children,
@@ -9,9 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        {children}
-        <Toaster />
+      <body className={inter.className}>
+        <UserProvider>
+          {children}
+          <Toaster />
+        </UserProvider>
       </body>
     </html>
   );

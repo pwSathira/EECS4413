@@ -32,7 +32,7 @@ class UserResponse(BaseModel):
 
 # Request model to authenticate a user.
 class UserAuthenticate(BaseModel):
-    username: str
+    email: str
     password: str
 
 # Request model to update a user.

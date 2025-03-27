@@ -177,30 +177,30 @@ def reset_failed_attempts(username: str):
 
 @router.post("/login", response_model=UserResponse)
 def login(user_data: UserAuthenticate, db: Session = Depends(get_db), background_tasks: BackgroundTasks = None):
-    user = get_user_by_username(db, user_data.username)
+    user = get_user_by_email(db, user_data.email)
 
     if not user:
         raise HTTPException(status_code=404, detail="User does not exist")
 
     # Check if the user has too many failed attempts
-    if user.username in failed_login_attempts:
-        attempts, lockout_time = failed_login_attempts[user.username]
+    if user.email in failed_login_attempts:
+        attempts, lockout_time = failed_login_attempts[user.email]
         if attempts >= 5 and lockout_time > datetime.utcnow():
             raise HTTPException(status_code=429, detail="Too many failed attempts. Try again later.")
 
     # Verify password
     if not verify_password(user_data.password, user.password):
         # Track failed attempts
-        if user.username not in failed_login_attempts:
-            failed_login_attempts[user.username] = (1, datetime.utcnow() + timedelta(minutes=5))
+        if user.email not in failed_login_attempts:
+            failed_login_attempts[user.email] = (1, datetime.utcnow() + timedelta(minutes=5))
         else:
-            attempts, _ = failed_login_attempts[user.username]
-            failed_login_attempts[user.username] = (attempts + 1, datetime.utcnow() + timedelta(minutes=5))
+            attempts, _ = failed_login_attempts[user.email]
+            failed_login_attempts[user.email] = (attempts + 1, datetime.utcnow() + timedelta(minutes=5))
 
         raise HTTPException(status_code=401, detail="Incorrect password")
 
     # Reset failed attempts on successful login
-    background_tasks.add_task(reset_failed_attempts, user.username)
+    background_tasks.add_task(reset_failed_attempts, user.email)
 
     return user
 

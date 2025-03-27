@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { AuctionWithItem } from "@/types/auction";
 import { fetchAuctionById, createBid } from "@/api/auction-api";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import Image from "next/image";
+import { AxiosError } from "axios";
+import { useUser } from "@/contexts/UserContext";
 
 export default function AuctionPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useUser();
   const [auction, setAuction] = useState<AuctionWithItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +46,11 @@ export default function AuctionPage() {
 
   useEffect(() => {
     loadAuction();
-  }, [params.id]);
+  }, [params.id, loadAuction]);
 
   const handleBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auction) return;
+    if (!auction || !user) return;
 
     setIsSubmitting(true);
     try {
@@ -56,18 +60,21 @@ export default function AuctionPage() {
         return;
       }
 
-      // Temporarily using a random user ID (4)
       await createBid({
         amount,
-        user_id: 4,
+        user_id: user.id,
         auction_id: auction.id,
       });
 
       toast.success("Bid placed successfully!");
       // Refresh auction data
       await loadAuction();
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Failed to place bid");
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        toast.error(err.response?.data?.detail || "Failed to place bid");
+      } else {
+        toast.error("Failed to place bid");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -143,28 +150,41 @@ export default function AuctionPage() {
                 <CardDescription>Enter your bid amount</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleBidSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="bidAmount">Bid Amount ($)</Label>
-                    <Input
-                      id="bidAmount"
-                      type="number"
-                      min={auction.current_price + auction.min_bid_increment}
-                      step={auction.min_bid_increment}
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      required
-                    />
+                {user ? (
+                  <form onSubmit={handleBidSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bidAmount">Bid Amount ($)</Label>
+                      <Input
+                        id="bidAmount"
+                        type="number"
+                        min={auction.current_price + auction.min_bid_increment}
+                        step={auction.min_bid_increment}
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      size="lg"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Placing Bid..." : "Place Bid"}
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">Please log in to place a bid</p>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => router.push('/login')}
+                    >
+                      Login to Bid
+                    </Button>
                   </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
-                    size="lg"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Placing Bid..." : "Place Bid"}
-                  </Button>
-                </form>
+                )}
               </CardContent>
             </Card>
           </div>
