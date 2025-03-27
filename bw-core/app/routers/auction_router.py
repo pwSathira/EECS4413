@@ -286,8 +286,6 @@ def create_sample_auction(db: Session = Depends(get_db)):
             bidder = bidders[i % len(bidders)]
             bid = Bid(
                 amount=amount,
-                bidder_name=bidder.username,
-                bidder_email=bidder.email,
                 user_id=bidder.id,
                 auction_id=auction.id,
                 created_at=auction.start_date + timedelta(hours=i+1)

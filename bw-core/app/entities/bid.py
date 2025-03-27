@@ -5,8 +5,6 @@ from datetime import datetime
 
 class BidBase(SQLModel):
     amount: float
-    bidder_name: str
-    bidder_email: str
     user_id: int = Field(foreign_key="user.id")
     auction_id: int = Field(foreign_key="auction.id")
 
@@ -32,8 +30,6 @@ class BidCreate(BidBase):
 class BidRead(BidBase):
     id: int
     amount: float
-    bidder_name: str
-    bidder_email: str
     user_id: int
     auction_id: int
     created_at: datetime
@@ -44,5 +40,3 @@ class BidRead(BidBase):
 
 class BidUpdate(SQLModel):
     amount: Optional[float] = None
-    bidder_name: Optional[str] = None
-    bidder_email: Optional[str] = None

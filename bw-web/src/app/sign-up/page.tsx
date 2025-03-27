@@ -80,7 +80,7 @@ export default function SignUpPage() {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              Start your journey in the world's most trusted auction marketplace.
+              Start your journey in the worlds most trusted auction marketplace.
             </p>
           </blockquote>
         </div>

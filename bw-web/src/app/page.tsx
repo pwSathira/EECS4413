@@ -8,11 +8,14 @@ import { Footer } from "../components/home-page/Footer";
 import { useEffect, useState } from "react";
 import { AuctionWithItem } from "../types/auction";
 import { fetchAuctionsWithItems } from "../api/auction-api";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Home() {
   const [auctions, setAuctions] = useState<AuctionWithItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const loadAuctions = async () => {
@@ -57,7 +60,9 @@ export default function Home() {
             <Card key={auction.id} className="flex flex-col">
               <CardHeader>
                 <div className="aspect-square relative mb-2">
-                  <img
+                  <Image
+                    width={500}
+                    height={500}
                     src={auction.item.image_url}
                     alt={auction.item.name}
                     className="object-cover rounded-lg w-full h-full"
@@ -79,7 +84,12 @@ export default function Home() {
                 </div>
               </CardContent>
               <CardFooter className="mt-auto">
-                <Button className="w-full">Place Bid</Button>
+                <Button 
+                    className="w-full"
+                    onClick={() => router.push(`/auction/${auction.id}`)}
+                  >
+                    Place Bid
+                </Button>
               </CardFooter>
             </Card>
           );
