@@ -119,3 +119,55 @@ def process_ended_auctions(db: Session) -> int:
             processed_count += 1
     
     return processed_count
+
+
+def get_latest_bid(db: Session, auction_id: int) -> Optional[Bid]:
+    """Get the latest bid for an auction"""
+    query = select(Bid).where(Bid.auction_id == auction_id).order_by(Bid.amount.desc())
+    return db.exec(query).first()
+
+
+def get_auction_with_latest_bid(db: Session, auction_id: int) -> Optional[dict]:
+    """Get auction details with the latest bid information"""
+    auction = db.get(Auction, auction_id)
+    if not auction:
+        return None
+    
+    latest_bid = get_latest_bid(db, auction_id)
+    current_price = auction.item.initial_price
+    
+    if latest_bid:
+        current_price = latest_bid.amount
+    
+    # Convert latest_bid to dict if it exists
+    latest_bid_dict = None
+    if latest_bid:
+        latest_bid_dict = {
+            "id": latest_bid.id,
+            "amount": latest_bid.amount,
+            "user_id": latest_bid.user_id,
+            "auction_id": latest_bid.auction_id,
+            "created_at": latest_bid.created_at
+        }
+    
+    return {
+        "id": auction.id,
+        "start_date": auction.start_date,
+        "end_date": auction.end_date,
+        "min_bid_increment": auction.min_bid_increment,
+        "item_id": auction.item_id,
+        "user_id": auction.user_id,
+        "is_active": auction.is_active,
+        "created_at": auction.created_at,
+        "winning_bid_id": auction.winning_bid_id,
+        "current_price": current_price,
+        "latest_bid": latest_bid_dict,
+        "item": {
+            "id": auction.item.id,
+            "name": auction.item.name,
+            "description": auction.item.description,
+            "initial_price": auction.item.initial_price,
+            "image_url": auction.item.image_url,
+            "created_at": auction.item.created_at
+        }
+    }

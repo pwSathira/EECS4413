@@ -8,6 +8,14 @@ export interface Auction {
     is_active: boolean;
     created_at: string;
     winning_bid_id?: number;
+    current_price: number;
+    latest_bid?: {
+      id: number;
+      amount: number;
+      user_id: number;
+      auction_id: number;
+      created_at: string;
+    };
   }
   
   export interface Item {

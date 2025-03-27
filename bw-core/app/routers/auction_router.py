@@ -10,7 +10,8 @@ from ..services.db import get_db
 from ..services.auction_service import (
     determine_winner,
     process_ended_auctions,
-    get_auction_with_winner
+    get_auction_with_winner,
+    get_auction_with_latest_bid
 )
 from ..entities.auction import Auction, AuctionCreate, AuctionRead, AuctionUpdate
 from ..services.user import get_user_by_id, get_user_role
@@ -50,12 +51,12 @@ def read_auctions(
     return auctions
 
 
-@router.get("/{auction_id}", response_model=AuctionRead)
+@router.get("/{auction_id}", response_model=dict)
 def read_auction(auction_id: int, db: Session = Depends(get_db)):
-    auction = db.get(Auction, auction_id)
-    if not auction:
+    result = get_auction_with_latest_bid(db, auction_id)
+    if not result:
         raise HTTPException(status_code=404, detail="Auction not found")
-    return auction
+    return result
 
 
 @router.patch("/{auction_id}", response_model=AuctionRead)

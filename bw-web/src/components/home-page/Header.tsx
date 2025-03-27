@@ -6,7 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-export function Header() {
+interface HeaderProps {
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+}
+
+export function Header({ searchQuery = "", onSearchChange }: HeaderProps) {
   const router = useRouter();
 
   return (
@@ -32,16 +37,20 @@ export function Header() {
         </div>
 
         {/* Search Bar */}
-        <div className="hidden md:flex items-center w-full max-w-sm mx-4">
-          <div className="relative w-full">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search auctions..."
-              className="pl-8"
-            />
+        {onSearchChange && (
+          <div className="hidden md:flex items-center w-full max-w-sm mx-4">
+            <div className="relative w-full">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search auctions..."
+                className="pl-8"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Auth Buttons */}
         <div className="flex items-center space-x-4">
