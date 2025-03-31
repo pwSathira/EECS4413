@@ -22,6 +22,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Save user data to localStorage whenever it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+  }, [user]);
+
   const logout = () => {
     localStorage.removeItem("user");
     setUser(null);
