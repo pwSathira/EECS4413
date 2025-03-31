@@ -14,7 +14,7 @@ from ..services.auction_service import (
     get_auction_with_latest_bid
 )
 from ..entities.auction import Auction, AuctionCreate, AuctionRead, AuctionUpdate
-from ..services.user import get_user_by_id, get_user_role
+from ..services.user import get_user_by_id, get_user_role, hash_password
 
 router = APIRouter(
     prefix="/auctions",
@@ -129,8 +129,8 @@ def create_sample_auction(db: Session = Depends(get_db)):
     sellers = [
         User(
             username=f"seller_{i}",
-            email=f"seller{i}@example.com",
-            password="sample_password",
+            email=f"s{i}@test.com",
+            password=hash_password("123"),
             is_active=True,
             is_admin=False,
             role="seller",
@@ -148,8 +148,8 @@ def create_sample_auction(db: Session = Depends(get_db)):
     bidders = [
         User(
             username=f"bidder_{i}",
-            email=f"a{i}@example.com",
-            password="123",
+            email=f"b{i}@test.com",
+            password=hash_password("123"),
             is_active=True,
             is_admin=False,
             role="buyer",
