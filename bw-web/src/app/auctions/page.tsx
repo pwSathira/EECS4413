@@ -108,6 +108,33 @@ export default function AuctionsPage() {
     }
   };
 
+  const handleConfirmPurchase = async (auctionId: number) => {
+    try {
+      const response = await fetch(`/api/auctions/${auctionId}/confirm-purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.detail || 'Failed to confirm purchase');
+      }
+
+      // Refresh auctions after confirming purchase
+      const updatedAuctions = await fetchAuctionsWithItems();
+      setAuctions(updatedAuctions);
+
+      // Show success message
+      toast.success(data.message || 'Purchase confirmed successfully');
+    } catch (err) {
+      console.error('Error confirming purchase:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to confirm purchase');
+    }
+  };
+
   const renderAuctionCard = (auction: AuctionWithItem) => {
     const endDateString = auction.end_date.split('.')[0] + 'Z';
     const endUTC = new Date(endDateString).getTime();
@@ -119,6 +146,10 @@ export default function AuctionsPage() {
     const userMaxBid = user ? auction.bids
       .filter(bid => bid.user_id === user.id)
       .reduce((max, bid) => Math.max(max, bid.amount), 0) : 0;
+
+    // Check if the current user is the winner
+    const isWinner = !isActive && auction.winning_bid_id && 
+      auction.bids.find(bid => bid.id === auction.winning_bid_id)?.user_id === user.id;
 
     return (
       <Card key={auction.id} className="flex flex-col">
@@ -185,6 +216,14 @@ export default function AuctionsPage() {
               onClick={() => handleEndAuction(auction.id)}
             >
               End Auction
+            </Button>
+          )}
+          {isWinner && (
+            <Button 
+              variant="default"
+              onClick={() => handleConfirmPurchase(auction.id)}
+            >
+              Confirm Purchase
             </Button>
           )}
         </CardFooter>
