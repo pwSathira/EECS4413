@@ -148,8 +148,8 @@ def create_sample_auction(db: Session = Depends(get_db)):
     bidders = [
         User(
             username=f"bidder_{i}",
-            email=f"bidder{i}@example.com",
-            password="sample_password",
+            email=f"a{i}@example.com",
+            password="123",
             is_active=True,
             is_admin=False,
             role="buyer",
@@ -223,10 +223,11 @@ def create_sample_auction(db: Session = Depends(get_db)):
         "is_active": False
     })
 
-    # Gaming Console - ending in 30 seconds
+    # Gaming Console - ending in 2 minutes
+    console_end = now + timedelta(minutes=2)  # Changed to exactly 2 minutes    
     auctions_data.append({
-        "start_date": now -timedelta(days=1),
-        "end_date": now + timedelta(seconds=120),
+        "start_date": now,  # Changed to start now instead of 1 day ago
+        "end_date": console_end,
         "min_bid_increment": 20.0,
         "item_id": items[1].id,  # Gaming Console
         "user_id": sellers[1].id,

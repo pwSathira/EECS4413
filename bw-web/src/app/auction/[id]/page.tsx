@@ -24,7 +24,7 @@ export default function AuctionPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number }>({ days: 0, hours: 0, minutes: 0 });
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   const loadAuction = useCallback(async () => {
     try {
@@ -45,6 +45,7 @@ export default function AuctionPage() {
     }
   }, [params.id]);
 
+  
   useEffect(() => {
     loadAuction();
   }, [loadAuction]);
@@ -53,27 +54,71 @@ export default function AuctionPage() {
     if (!auction) return;
 
     const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const end = new Date(auction.end_date).getTime();
-      const timeLeft = end - now;
+      // Get current time in UTC milliseconds
+      const nowUTC = Date.now();
+      
+      // Parse the end date string, removing microseconds
+      const endDateString = auction.end_date.split('.')[0] + 'Z';
+      const endUTC = new Date(endDateString).getTime();
+      
+      // Calculate time difference
+      const timeLeft = endUTC - nowUTC;
 
-      return {
-        days: Math.floor(timeLeft / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
-      };
+      // Debug logging
+      console.log('Auction times:', {
+        now: new Date(nowUTC).toISOString(),
+        end: new Date(endUTC).toISOString(),
+        timeLeftMinutes: Math.floor(timeLeft / 1000 / 60),
+        timeLeftSeconds: Math.floor(timeLeft / 1000),
+        rawEndDate: auction.end_date,
+        parsedEndDate: endDateString
+      });
+
+      // Handle expired auctions
+      if (timeLeft < 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      const seconds = Math.floor((timeLeft / 1000) % 60);
+      const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+      const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+
+      return { days, hours, minutes, seconds };
     };
 
     // Initial calculation
     setTimeLeft(calculateTimeLeft());
 
-    // Update every minute
+    // Update every second
     const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 60000);
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+      
+      // If auction has ended, clear the interval
+      if (Object.values(newTimeLeft).every(v => v === 0)) {
+        clearInterval(interval);
+      }
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [auction]);
+
+  // Format the dates using UTC
+  const formatDate = (dateString: string) => {
+    // Remove microseconds before parsing
+    const cleanDate = dateString.split('.')[0] + 'Z';
+    const date = new Date(cleanDate);
+    return date.toLocaleString(undefined, {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
 
   const handleBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,16 +196,16 @@ export default function AuctionPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Time Remaining</p>
                     <p className="text-xl font-semibold">
-                      {`${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`}
+                      {`${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Start Date</p>
-                    <p>{new Date(auction.start_date).toLocaleDateString('en-US')}</p>
+                    <p>{formatDate(auction.start_date)} UTC</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">End Date</p>
-                    <p>{new Date(auction.end_date).toLocaleDateString('en-US')}</p>
+                    <p>{formatDate(auction.end_date)} UTC</p>
                   </div>
                 </div>
               </CardContent>

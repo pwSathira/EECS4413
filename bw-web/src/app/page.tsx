@@ -70,9 +70,17 @@ export default function Home() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAuctions.map((auction) => {
-            const timeLeft = new Date(auction.end_date).getTime() - new Date().getTime();
-            const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            // Parse the end date string, removing microseconds
+            const endDateString = auction.end_date.split('.')[0] + 'Z';
+            const endUTC = new Date(endDateString).getTime();
+            const nowUTC = Date.now();
+            
+            // Calculate time difference
+            const timeLeft = endUTC - nowUTC;
+            
+            // Calculate hours and minutes
+            const hoursLeft = Math.max(0, Math.floor(timeLeft / (1000 * 60 * 60)));
+            const minutesLeft = Math.max(0, Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60)));
 
             return (
               <Card key={auction.id} className="flex flex-col">
