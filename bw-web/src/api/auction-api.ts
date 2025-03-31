@@ -6,7 +6,7 @@ const API_BASE_URL = "http://localhost:8000/api/v1";
 export const fetchAuctionsWithItems = async (): Promise<AuctionWithItem[]> => {
   try {
     const auctionsResponse = await axios.get<Auction[]>(
-      `${API_BASE_URL}/auctions/?skip=0&limit=100&active_only=true`
+      `${API_BASE_URL}/auctions/?skip=0&limit=100`
     );
 
     const auctionsWithItems = await Promise.all(

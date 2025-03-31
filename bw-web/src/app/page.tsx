@@ -36,10 +36,13 @@ export default function Home() {
 
   // Filter auctions based on search query
   const filteredAuctions = useMemo(() => {
-    if (!searchQuery.trim()) return auctions;
+    // First filter for active auctions only
+    const activeAuctions = auctions.filter(auction => auction.is_active);
+    
+    if (!searchQuery.trim()) return activeAuctions;
 
     const query = searchQuery.toLowerCase().trim();
-    return auctions.filter((auction) => {
+    return activeAuctions.filter((auction) => {
       const nameMatch = auction.item.name.toLowerCase().includes(query);
       const descriptionMatch = auction.item.description.toLowerCase().includes(query);
       return nameMatch || descriptionMatch;

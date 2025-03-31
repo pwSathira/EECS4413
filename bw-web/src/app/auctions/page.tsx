@@ -73,7 +73,9 @@ export default function AuctionsPage() {
     return null;
   }
 
+  // For sellers, show all their auctions
   const sellerAuctions = auctions.filter(auction => auction.user_id === user.id);
+  // For buyers, show auctions they've bid on
   const buyerAuctions = auctions.filter(auction => 
     auction.bids?.some(bid => bid.user_id === user.id) ?? false
   );
@@ -101,7 +103,7 @@ export default function AuctionsPage() {
     const endUTC = new Date(endDateString).getTime();
     const nowUTC = Date.now();
     const timeLeft = endUTC - nowUTC;
-    const isActive = timeLeft > 0;
+    const isActive = auction.is_active;
 
     // Calculate user's maximum bid for this auction
     const userMaxBid = user ? auction.bids
@@ -211,22 +213,14 @@ export default function AuctionsPage() {
         <TabsContent value="active">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(user.role === "seller" ? sellerAuctions : buyerAuctions)
-              .filter(auction => {
-                const endDateString = auction.end_date.split('.')[0] + 'Z';
-                const endUTC = new Date(endDateString).getTime();
-                return endUTC > Date.now();
-              })
+              .filter(auction => auction.is_active)
               .map(renderAuctionCard)}
           </div>
         </TabsContent>
         <TabsContent value="ended">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {(user.role === "seller" ? sellerAuctions : buyerAuctions)
-              .filter(auction => {
-                const endDateString = auction.end_date.split('.')[0] + 'Z';
-                const endUTC = new Date(endDateString).getTime();
-                return endUTC <= Date.now();
-              })
+              .filter(auction => !auction.is_active)
               .map(renderAuctionCard)}
           </div>
         </TabsContent>
