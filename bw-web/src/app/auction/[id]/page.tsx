@@ -211,49 +211,51 @@ export default function AuctionPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Place a Bid</CardTitle>
-                <CardDescription>Enter your bid amount</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {user ? (
-                  <form onSubmit={handleBidSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="bidAmount">Bid Amount ($)</Label>
-                      <Input
-                        id="bidAmount"
-                        type="number"
-                        min={auction.current_price + auction.min_bid_increment}
-                        step={auction.min_bid_increment}
-                        value={bidAmount}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                        required
-                      />
+            {(!user || user.role !== "seller" || user.id !== auction.user_id) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Place a Bid</CardTitle>
+                  <CardDescription>Enter your bid amount</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {user ? (
+                    <form onSubmit={handleBidSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bidAmount">Bid Amount ($)</Label>
+                        <Input
+                          id="bidAmount"
+                          type="number"
+                          min={auction.current_price + auction.min_bid_increment}
+                          step={auction.min_bid_increment}
+                          value={bidAmount}
+                          onChange={(e) => setBidAmount(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        size="lg"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Placing Bid..." : "Place Bid"}
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground">Please log in to place a bid</p>
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={() => router.push('/login')}
+                      >
+                        Login to Bid
+                      </Button>
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      size="lg"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Placing Bid..." : "Place Bid"}
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-muted-foreground">Please log in to place a bid</p>
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => router.push('/login')}
-                    >
-                      Login to Bid
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
