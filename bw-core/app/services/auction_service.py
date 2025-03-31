@@ -143,11 +143,24 @@ def get_auction_with_latest_bid(db: Session, auction_id: int) -> Optional[dict]:
     if not auction:
         return None
     
-    latest_bid = get_latest_bid(db, auction_id)
+    # Get all bids for this auction
+    bids_query = select(Bid).where(Bid.auction_id == auction_id).order_by(Bid.amount.desc())
+    all_bids = db.exec(bids_query).all()
+    
+    latest_bid = all_bids[0] if all_bids else None
     current_price = auction.item.initial_price
     
     if latest_bid:
         current_price = latest_bid.amount
+    
+    # Convert bids to dict format
+    bids_dict = [{
+        "id": bid.id,
+        "amount": bid.amount,
+        "user_id": bid.user_id,
+        "auction_id": bid.auction_id,
+        "created_at": bid.created_at
+    } for bid in all_bids]
     
     # Convert latest_bid to dict if it exists
     latest_bid_dict = None
@@ -172,6 +185,7 @@ def get_auction_with_latest_bid(db: Session, auction_id: int) -> Optional[dict]:
         "winning_bid_id": auction.winning_bid_id,
         "current_price": current_price,
         "latest_bid": latest_bid_dict,
+        "bids": bids_dict,
         "item": {
             "id": auction.item.id,
             "name": auction.item.name,

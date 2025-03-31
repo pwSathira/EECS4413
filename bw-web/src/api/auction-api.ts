@@ -15,19 +15,21 @@ export const fetchAuctionsWithItems = async (): Promise<AuctionWithItem[]> => {
           `${API_BASE_URL}/items/${auction.item_id}`
         );
         
-        // Get the latest bid for this auction
+        // Get all bids for this auction
         const bidsResponse = await axios.get(
-          `${API_BASE_URL}/bids/?auction_id=${auction.id}&limit=1`
+          `${API_BASE_URL}/bids/?auction_id=${auction.id}&limit=100`
         );
         
-        const latestBid = bidsResponse.data[0] || null;
+        const bids = bidsResponse.data;
+        const latestBid = bids[0] || null;
         const currentPrice = latestBid ? latestBid.amount : itemResponse.data.initial_price;
 
         return {
           ...auction,
           item: itemResponse.data,
           current_price: currentPrice,
-          latest_bid: latestBid
+          latest_bid: latestBid,
+          bids: bids
         };
       })
     );
