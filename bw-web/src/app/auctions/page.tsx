@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Clock, DollarSign, Gavel } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 export default function AuctionsPage() {
   const { user, loading: userLoading } = useUser();
@@ -84,17 +85,26 @@ export default function AuctionsPage() {
     try {
       const response = await fetch(`/api/auctions/${auctionId}/end`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-      if (response.ok) {
-        // Refresh auctions after ending
-        const data = await fetchAuctionsWithItems();
-        setAuctions(data);
-      } else {
-        throw new Error('Failed to end auction');
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.detail || 'Failed to end auction');
       }
+
+      // Refresh auctions after ending
+      const updatedAuctions = await fetchAuctionsWithItems();
+      setAuctions(updatedAuctions);
+
+      // Show success message
+      toast.success(data.message || 'Auction ended successfully');
     } catch (err) {
-      console.error(err);
-      // You might want to show a toast notification here
+      console.error('Error ending auction:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to end auction');
     }
   };
 

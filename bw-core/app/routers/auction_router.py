@@ -107,10 +107,32 @@ def end_auction_manually(auction_id: int, db: Session = Depends(get_db)):
     if not auction.is_active:
         raise HTTPException(status_code=400, detail="Auction is already ended")
     
-    winner = determine_winner(db, auction_id)
+    # Find the highest bid
+    highest_bid = db.exec(
+        select(Bid)
+        .where(Bid.auction_id == auction_id)
+        .order_by(Bid.amount.desc())
+    ).first()
     
-    if winner:
-        return winner
+    # Update auction status
+    auction.is_active = False
+    if highest_bid:
+        auction.winning_bid_id = highest_bid.id
+    
+    # Save the changes
+    db.add(auction)
+    db.commit()
+    db.refresh(auction)
+    
+    # Return winner info if there's a winner
+    if highest_bid:
+        return {
+            "message": "Auction ended successfully",
+            "auction_id": auction.id,
+            "item_id": auction.item_id,
+            "winning_bid_id": highest_bid.id,
+            "winning_amount": highest_bid.amount
+        }
     else:
         return {"message": "Auction ended, no bids were placed"}
     
