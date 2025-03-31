@@ -218,47 +218,57 @@ def create_sample_auction(db: Session = Depends(get_db)):
         "start_date": now - timedelta(days=2),
         "end_date": now - timedelta(hours=1),
         "min_bid_increment": 10.0,
-        "item_id": items[0].id,
+        "item_id": items[0].id,  # Vintage Camera
         "user_id": sellers[0].id,
         "is_active": False
     })
 
-    # Active auction ending soon
+    # Gaming Console - ending in 30 seconds
     auctions_data.append({
-        "start_date": now - timedelta(days=1),
-        "end_date": now + timedelta(hours=2),
+        "start_date": now -timedelta(days=1),
+        "end_date": now + timedelta(seconds=120),
         "min_bid_increment": 20.0,
-        "item_id": items[1].id,
+        "item_id": items[1].id,  # Gaming Console
         "user_id": sellers[1].id,
         "is_active": True
     })
 
-    # Active auction with plenty of time
+    # Antique Watch - ending in 6 hours
+    auctions_data.append({
+        "start_date": now - timedelta(days=1),
+        "end_date": now + timedelta(hours=6),
+        "min_bid_increment": 15.0,
+        "item_id": items[2].id,  # Antique Watch
+        "user_id": sellers[1].id,
+        "is_active": True
+    })
+
+    # Art Print - ending in 3 days
     auctions_data.append({
         "start_date": now - timedelta(hours=12),
         "end_date": now + timedelta(days=3),
-        "min_bid_increment": 15.0,
-        "item_id": items[2].id,
+        "min_bid_increment": 10.0,
+        "item_id": items[3].id,  # Art Print
         "user_id": sellers[2].id,
         "is_active": True
     })
 
-    # Future auction
+    # First Collectible Cards - future auction
     auctions_data.append({
         "start_date": now + timedelta(days=1),
         "end_date": now + timedelta(days=4),
         "min_bid_increment": 25.0,
-        "item_id": items[3].id,
+        "item_id": items[4].id,  # Collectible Cards
         "user_id": sellers[0].id,
         "is_active": True
     })
 
-    # Active auction with no bids yet
+    # Second Collectible Cards - ending in 2 days
     auctions_data.append({
         "start_date": now - timedelta(hours=6),
         "end_date": now + timedelta(days=2),
         "min_bid_increment": 30.0,
-        "item_id": items[4].id,
+        "item_id": items[4].id,  # Collectible Cards
         "user_id": sellers[1].id,
         "is_active": True
     })
@@ -272,12 +282,14 @@ def create_sample_auction(db: Session = Depends(get_db)):
 
     # Add bids to some auctions
     bids_data = [
-        # Bids for ended auction
+        # Bids for ended auction (Vintage Camera)
         {"auction_idx": 0, "amounts": [550.0, 600.0, 650.0]},
-        # Bids for active auction ending soon
+        # Bids for Gaming Console ending in 1 minute
         {"auction_idx": 1, "amounts": [450.0, 500.0]},
-        # Bids for active auction with plenty of time
+        # Bids for Antique Watch
         {"auction_idx": 2, "amounts": [350.0]},
+        # Bids for Art Print
+        {"auction_idx": 3, "amounts": [200.0]},
     ]
 
     created_bids = []

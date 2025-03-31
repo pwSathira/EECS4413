@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AuctionWithItem } from "@/types/auction";
 import { fetchAuctionById, createBid } from "@/api/auction-api";
@@ -24,8 +24,9 @@ export default function AuctionPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number }>({ days: 0, hours: 0, minutes: 0 });
 
-  const loadAuction = async () => {
+  const loadAuction = useCallback(async () => {
     try {
       const id = parseInt(params.id as string);
       if (isNaN(id)) {
@@ -42,11 +43,37 @@ export default function AuctionPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
   useEffect(() => {
     loadAuction();
-  }, [params.id, loadAuction]);
+  }, [loadAuction]);
+
+  useEffect(() => {
+    if (!auction) return;
+
+    const calculateTimeLeft = () => {
+      const now = new Date().getTime();
+      const end = new Date(auction.end_date).getTime();
+      const timeLeft = end - now;
+
+      return {
+        days: Math.floor(timeLeft / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+      };
+    };
+
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
+
+    // Update every minute
+    const interval = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [auction]);
 
   const handleBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,11 +115,6 @@ export default function AuctionPage() {
     return <div className="container mx-auto py-8 text-red-500">{error || "Auction not found"}</div>;
   }
 
-  const timeLeft = new Date(auction.end_date).getTime() - new Date().getTime();
-  const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-  const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
   return (
     <div className="container mx-auto py-8">
       <Header />
@@ -129,16 +151,16 @@ export default function AuctionPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Time Remaining</p>
                     <p className="text-xl font-semibold">
-                      {`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`}
+                      {`${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m`}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Start Date</p>
-                    <p>{new Date(auction.start_date).toLocaleDateString()}</p>
+                    <p>{new Date(auction.start_date).toLocaleDateString('en-US')}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">End Date</p>
-                    <p>{new Date(auction.end_date).toLocaleDateString()}</p>
+                    <p>{new Date(auction.end_date).toLocaleDateString('en-US')}</p>
                   </div>
                 </div>
               </CardContent>

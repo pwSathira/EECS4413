@@ -115,8 +115,18 @@ def process_ended_auctions(db: Session) -> int:
     processed_count = 0
     
     for auction in ended_auctions:
-        if determine_winner(db, auction.id):
+        # Mark auction as inactive regardless of whether there's a winner
+        auction.is_active = False
+        
+        # Try to determine winner
+        winner_result = determine_winner(db, auction.id)
+        if winner_result:
             processed_count += 1
+        
+        # Commit changes even if no winner was found
+        db.add(auction)
+        db.commit()
+        db.refresh(auction)
     
     return processed_count
 
