@@ -75,4 +75,16 @@ export const createBid = async (bid: BidCreate): Promise<void> => {
     throw error;
   }
 };
+
+import { AuctionCreate } from "@/types/auction";
+
+export const createAuction = async (auction: AuctionCreate): Promise<void> => {
+  try {
+    await axios.post(`${API_BASE_URL}/auctions/`, auction);
+  } catch (error) {
+    console.error("Error creating auction:", error);
+    throw error;
+  }
+};
+
   

@@ -76,3 +76,12 @@ export interface Auction {
     currentHighestBid: number;
     userId: number | null;
   }
+
+  export interface AuctionCreate {
+    start_date: string;
+    end_date: string;
+    min_bid_increment: number;
+    item_id: number;
+    user_id: number;
+  }
+  

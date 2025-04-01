@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios, { AxiosError } from "axios";
 
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "http://bidwize-core:8000/api/v1";
 
 interface ErrorResponse {
   detail?: string;
