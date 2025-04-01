@@ -100,11 +100,15 @@ def get_auction_status(auction_id: int, db: Session = Depends(get_db)):
 @router.post("/{auction_id}/end", response_model=dict)
 def end_auction_manually(auction_id: int, db: Session = Depends(get_db)):
     """Manually end an auction and determine the winner"""
+    print(f"Attempting to end auction with ID: {auction_id}")  # Debug log
+    
     auction = db.get(Auction, auction_id)
     if not auction:
-        raise HTTPException(status_code=404, detail="Auction not found")
+        print(f"Auction {auction_id} not found in database")  # Debug log
+        raise HTTPException(status_code=404, detail=f"Auction with ID {auction_id} not found")
     
     if not auction.is_active:
+        print(f"Auction {auction_id} is already ended")  # Debug log
         raise HTTPException(status_code=400, detail="Auction is already ended")
     
     # Find the highest bid
@@ -118,11 +122,20 @@ def end_auction_manually(auction_id: int, db: Session = Depends(get_db)):
     auction.is_active = False
     if highest_bid:
         auction.winning_bid_id = highest_bid.id
+        print(f"Setting winning bid {highest_bid.id} for auction {auction_id}")  # Debug log
+    else:
+        print(f"No bids found for auction {auction_id}")  # Debug log
     
     # Save the changes
-    db.add(auction)
-    db.commit()
-    db.refresh(auction)
+    try:
+        db.add(auction)
+        db.commit()
+        db.refresh(auction)
+        print(f"Successfully ended auction {auction_id}")  # Debug log
+    except Exception as e:
+        print(f"Error saving auction {auction_id}: {str(e)}")  # Debug log
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error saving auction: {str(e)}")
     
     # Return winner info if there's a winner
     if highest_bid:

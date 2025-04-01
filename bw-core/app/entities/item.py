@@ -16,6 +16,7 @@ class Item(ItemBase, table=True):
     
     # Relationships
     auctions: List["Auction"] = Relationship(back_populates="item")
+    orders: List["Order"] = Relationship(back_populates="item")
 
 
 class ItemCreate(ItemBase):

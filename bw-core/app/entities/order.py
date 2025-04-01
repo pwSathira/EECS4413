@@ -11,9 +11,11 @@ class Order(SQLModel, table=True):
     country: str
     postal_code: str
     total_paid: float  # Total price paid (item price + shipping fee)
-    item_id: int
+    item_id: int = Field(foreign_key="item.id")  # Foreign key to Item
+    auction_id: int = Field(foreign_key="auction.id")  # Foreign key to Auction
 
     user: "User" = Relationship(back_populates="orders")  # Relationship to User
+    item: "Item" = Relationship(back_populates="orders")  # Relationship to Item
 
     class Config:
         orm_mode = True

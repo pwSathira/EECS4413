@@ -88,11 +88,31 @@ class OrderService:
             country=winner_info.country,
             postal_code=winner_info.postal_code,
             total_paid=total_paid,
-            item_id=item_id
+            item_id=item_id,
+            auction_id=auction_id  # Add auction_id to track which auction this order is for
         )
 
         db.add(new_order)
         db.commit()
         db.refresh(new_order)
 
-        return {"message": "Order successfully added", "order_id": new_order.id}
+        # Fetch the complete order with item relationship
+        order_with_item = (
+            db.query(OrderModel)
+            .filter(OrderModel.id == new_order.id)
+            .join(OrderModel.item)
+            .first()
+        )
+
+        return {
+            "message": "Order successfully added",
+            "order_id": order_with_item.id,
+            "item": {
+                "id": order_with_item.item.id,
+                "name": order_with_item.item.name,
+                "description": order_with_item.item.description,
+                "initial_price": order_with_item.item.initial_price,
+                "image_url": order_with_item.item.image_url,
+                "created_at": order_with_item.item.created_at
+            }
+        }
