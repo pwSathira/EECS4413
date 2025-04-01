@@ -137,9 +137,6 @@ export default function AuctionsPage() {
 
   const renderAuctionCard = (auction: AuctionWithItem) => {
     const endDateString = auction.end_date.split('.')[0] + 'Z';
-    const endUTC = new Date(endDateString).getTime();
-    const nowUTC = Date.now();
-    const timeLeft = endUTC - nowUTC;
     const isActive = auction.is_active;
 
     // Calculate user's maximum bid for this auction

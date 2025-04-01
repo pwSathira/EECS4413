@@ -1,24 +1,32 @@
-import { NextResponse } from "next/server";
-import axios from "axios";
+import { NextRequest, NextResponse } from "next/server";
+import axios, { AxiosError } from "axios";
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
+interface ErrorResponse {
+  detail?: string;
+}
+
+type Params = Promise<{ id: string }>;
+
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Params }
 ) {
   try {
+    const { id } = await params;
+
     const response = await axios.post(
-      `${API_BASE_URL}/auctions/${params.id}/end`
+      `${API_BASE_URL}/auctions/${id}/end`
     );
     return NextResponse.json(response.data);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error ending auction:", error);
-    // Transform FastAPI error response to match our frontend expectations
-    const errorMessage = error.response?.data?.detail || "Failed to end auction";
+    const axiosError = error as AxiosError<ErrorResponse>;
+    const errorMessage = axiosError.response?.data?.detail || "Failed to end auction";
     return NextResponse.json(
       { error: errorMessage },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     );
   }
 } 

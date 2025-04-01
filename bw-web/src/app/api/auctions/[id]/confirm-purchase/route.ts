@@ -1,27 +1,44 @@
-import { NextResponse } from "next/server";
-import axios from "axios";
+import { NextRequest, NextResponse } from "next/server";
+import axios, { AxiosError } from "axios";
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
+interface ErrorResponse {
+  detail?: string;
+}
+
+type Params = Promise<{ id: string }>;
+
+interface RequestBody {
+  total_paid: number;
+  item_id: number;
+}
+
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Params }
 ) {
   try {
+    const { id } = await params;
+
+    const requestBody: RequestBody = {
+      total_paid: 0, // This will be set by the backend based on the winning bid
+      item_id: 0, // This will be set by the backend based on the auction
+    };
+
     const response = await axios.post(
-      `${API_BASE_URL}/orders/auction/add/${params.id}`,
-      {
-        total_paid: 0, // This will be set by the backend based on the winning bid
-        item_id: 0, // This will be set by the backend based on the auction
-      }
+      `${API_BASE_URL}/orders/auction/add/${id}`,
+      requestBody
     );
     return NextResponse.json(response.data);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error confirming purchase:", error);
-    const errorMessage = error.response?.data?.detail || "Failed to confirm purchase";
+    const axiosError = error as AxiosError<ErrorResponse>;
+    const errorMessage =
+      axiosError.response?.data?.detail || "Failed to confirm purchase";
     return NextResponse.json(
       { error: errorMessage },
-      { status: error.response?.status || 500 }
+      { status: axiosError.response?.status || 500 }
     );
   }
-} 
+}
