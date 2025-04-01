@@ -30,3 +30,26 @@ export interface Auction {
   export interface AuctionWithItem extends Auction {
     item: Item;
   }
+
+  export interface AuctionWithWinner {
+    auctionId: number;
+    itemName: string;
+    itemDescription: string;
+    itemImageUrl: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    minBidIncrement: number;
+    currentHighestBid: number | null;
+    winner?: {
+      userId: number;
+      username: string;
+      email: string;
+      winningBidAmount: number;
+    } | null;
+  }
+
+  export interface WinnerIdAndItemPrice {
+    currentHighestBid: number;
+    userId: number | null;
+  }
