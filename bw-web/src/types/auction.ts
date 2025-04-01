@@ -53,3 +53,26 @@ export interface Auction {
       created_at: string;
     }[];
   }
+//for payment page
+  export interface AuctionWithWinner {
+    auctionId: number;
+    itemName: string;
+    itemDescription: string;
+    itemImageUrl: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    minBidIncrement: number;
+    currentHighestBid: number | null;
+    winner?: {
+      userId: number;
+      username: string;
+      email: string;
+      winningBidAmount: number;
+    } | null;
+  }
+//for payment page
+  export interface WinnerIdAndItemPrice {
+    currentHighestBid: number;
+    userId: number | null;
+  }

@@ -29,6 +29,7 @@ export interface User {
   postal_code: string;
 }
 
+
 export const login = async (credentials: LoginCredentials): Promise<User> => {
   try {
     const response = await axios.post(`${API_BASE_URL}/user/login`, credentials);
@@ -48,3 +49,13 @@ export const signUp = async (data: SignUpData): Promise<User> => {
     throw error;
   }
 }; 
+
+export const getUserById = async (userId: number): Promise<User> => {
+  try {
+    const response = await axios.get<User>(`${API_BASE_URL}/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    throw error;
+  }
+};
