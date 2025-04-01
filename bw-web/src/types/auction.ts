@@ -53,7 +53,7 @@ export interface Auction {
       created_at: string;
     }[];
   }
-
+//for payment page
   export interface AuctionWithWinner {
     auctionId: number;
     itemName: string;
@@ -71,7 +71,7 @@ export interface Auction {
       winningBidAmount: number;
     } | null;
   }
-
+//for payment page
   export interface WinnerIdAndItemPrice {
     currentHighestBid: number;
     userId: number | null;
