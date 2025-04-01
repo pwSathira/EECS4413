@@ -5,10 +5,18 @@ export interface Auction {
     min_bid_increment: number;
     item_id: number;
     user_id: number;
+    seller_id: number;
     is_active: boolean;
     created_at: string;
     winning_bid_id?: number;
     current_price: number;
+    bids: {
+      id: number;
+      amount: number;
+      user_id: number;
+      auction_id: number;
+      created_at: string;
+    }[];
     latest_bid?: {
       id: number;
       amount: number;
@@ -29,6 +37,21 @@ export interface Auction {
   
   export interface AuctionWithItem extends Auction {
     item: Item;
+    current_price: number;
+    latest_bid?: {
+      id: number;
+      amount: number;
+      user_id: number;
+      auction_id: number;
+      created_at: string;
+    };
+    bids: {
+      id: number;
+      amount: number;
+      user_id: number;
+      auction_id: number;
+      created_at: string;
+    }[];
   }
 
   export interface AuctionWithWinner {

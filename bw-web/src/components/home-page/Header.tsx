@@ -50,9 +50,11 @@ export function Header({ searchQuery = "", onSearchChange }: HeaderProps) {
             <Link href="/" className="text-gray-600 hover:text-primary">
               Home
             </Link>
-            <Link href="/auctions" className="text-gray-600 hover:text-primary">
-              Auctions
-            </Link>
+            {user && (
+              <Link href="/auctions" className="text-gray-600 hover:text-primary">
+                Auctions
+              </Link>
+            )}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

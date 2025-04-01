@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AuctionWithItem } from "@/types/auction";
 import { fetchAuctionById, createBid } from "@/api/auction-api";
@@ -24,8 +24,9 @@ export default function AuctionPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number }>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  const loadAuction = async () => {
+  const loadAuction = useCallback(async () => {
     try {
       const id = parseInt(params.id as string);
       if (isNaN(id)) {
@@ -42,11 +43,82 @@ export default function AuctionPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
+  
   useEffect(() => {
     loadAuction();
-  }, [params.id, loadAuction]);
+  }, [loadAuction]);
+
+  useEffect(() => {
+    if (!auction) return;
+
+    const calculateTimeLeft = () => {
+      // Get current time in UTC milliseconds
+      const nowUTC = Date.now();
+      
+      // Parse the end date string, removing microseconds
+      const endDateString = auction.end_date.split('.')[0] + 'Z';
+      const endUTC = new Date(endDateString).getTime();
+      
+      // Calculate time difference
+      const timeLeft = endUTC - nowUTC;
+
+      // Debug logging
+      console.log('Auction times:', {
+        now: new Date(nowUTC).toISOString(),
+        end: new Date(endUTC).toISOString(),
+        timeLeftMinutes: Math.floor(timeLeft / 1000 / 60),
+        timeLeftSeconds: Math.floor(timeLeft / 1000),
+        rawEndDate: auction.end_date,
+        parsedEndDate: endDateString
+      });
+
+      // Handle expired auctions
+      if (timeLeft < 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
+
+      const seconds = Math.floor((timeLeft / 1000) % 60);
+      const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+      const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+
+      return { days, hours, minutes, seconds };
+    };
+
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
+
+    // Update every second
+    const interval = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+      
+      // If auction has ended, clear the interval
+      if (Object.values(newTimeLeft).every(v => v === 0)) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction]);
+
+  // Format the dates using UTC
+  const formatDate = (dateString: string) => {
+    // Remove microseconds before parsing
+    const cleanDate = dateString.split('.')[0] + 'Z';
+    const date = new Date(cleanDate);
+    return date.toLocaleString(undefined, {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
 
   const handleBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,11 +160,6 @@ export default function AuctionPage() {
     return <div className="container mx-auto py-8 text-red-500">{error || "Auction not found"}</div>;
   }
 
-  const timeLeft = new Date(auction.end_date).getTime() - new Date().getTime();
-  const daysLeft = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-  const hoursLeft = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
   return (
     <div className="container mx-auto py-8">
       <Header />
@@ -129,64 +196,66 @@ export default function AuctionPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Time Remaining</p>
                     <p className="text-xl font-semibold">
-                      {`${daysLeft}d ${hoursLeft}h ${minutesLeft}m`}
+                      {`${timeLeft.days}d ${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Start Date</p>
-                    <p>{new Date(auction.start_date).toLocaleDateString()}</p>
+                    <p>{formatDate(auction.start_date)} UTC</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">End Date</p>
-                    <p>{new Date(auction.end_date).toLocaleDateString()}</p>
+                    <p>{formatDate(auction.end_date)} UTC</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Place a Bid</CardTitle>
-                <CardDescription>Enter your bid amount</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {user ? (
-                  <form onSubmit={handleBidSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="bidAmount">Bid Amount ($)</Label>
-                      <Input
-                        id="bidAmount"
-                        type="number"
-                        min={auction.current_price + auction.min_bid_increment}
-                        step={auction.min_bid_increment}
-                        value={bidAmount}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                        required
-                      />
+            {(!user || user.role !== "seller" || user.id !== auction.user_id) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Place a Bid</CardTitle>
+                  <CardDescription>Enter your bid amount</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {user ? (
+                    <form onSubmit={handleBidSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bidAmount">Bid Amount ($)</Label>
+                        <Input
+                          id="bidAmount"
+                          type="number"
+                          min={auction.current_price + auction.min_bid_increment}
+                          step={auction.min_bid_increment}
+                          value={bidAmount}
+                          onChange={(e) => setBidAmount(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <Button 
+                        type="submit" 
+                        className="w-full" 
+                        size="lg"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Placing Bid..." : "Place Bid"}
+                      </Button>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground">Please log in to place a bid</p>
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={() => router.push('/login')}
+                      >
+                        Login to Bid
+                      </Button>
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      size="lg"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Placing Bid..." : "Place Bid"}
-                    </Button>
-                  </form>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-muted-foreground">Please log in to place a bid</p>
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => router.push('/login')}
-                    >
-                      Login to Bid
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

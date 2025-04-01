@@ -14,7 +14,7 @@ from ..services.auction_service import (
     get_auction_with_latest_bid
 )
 from ..entities.auction import Auction, AuctionCreate, AuctionRead, AuctionUpdate
-from ..services.user import get_user_by_id, get_user_role
+from ..services.user import get_user_by_id, get_user_role, hash_password
 
 router = APIRouter(
     prefix="/auctions",
@@ -107,10 +107,32 @@ def end_auction_manually(auction_id: int, db: Session = Depends(get_db)):
     if not auction.is_active:
         raise HTTPException(status_code=400, detail="Auction is already ended")
     
-    winner = determine_winner(db, auction_id)
+    # Find the highest bid
+    highest_bid = db.exec(
+        select(Bid)
+        .where(Bid.auction_id == auction_id)
+        .order_by(Bid.amount.desc())
+    ).first()
     
-    if winner:
-        return winner
+    # Update auction status
+    auction.is_active = False
+    if highest_bid:
+        auction.winning_bid_id = highest_bid.id
+    
+    # Save the changes
+    db.add(auction)
+    db.commit()
+    db.refresh(auction)
+    
+    # Return winner info if there's a winner
+    if highest_bid:
+        return {
+            "message": "Auction ended successfully",
+            "auction_id": auction.id,
+            "item_id": auction.item_id,
+            "winning_bid_id": highest_bid.id,
+            "winning_amount": highest_bid.amount
+        }
     else:
         return {"message": "Auction ended, no bids were placed"}
     
@@ -129,8 +151,8 @@ def create_sample_auction(db: Session = Depends(get_db)):
     sellers = [
         User(
             username=f"seller_{i}",
-            email=f"seller{i}@example.com",
-            password="sample_password",
+            email=f"s{i}@test.com",
+            password=hash_password("123"),
             is_active=True,
             is_admin=False,
             role="seller",
@@ -148,8 +170,8 @@ def create_sample_auction(db: Session = Depends(get_db)):
     bidders = [
         User(
             username=f"bidder_{i}",
-            email=f"bidder{i}@example.com",
-            password="sample_password",
+            email=f"b{i}@test.com",
+            password=hash_password("123"),
             is_active=True,
             is_admin=False,
             role="buyer",
@@ -218,47 +240,58 @@ def create_sample_auction(db: Session = Depends(get_db)):
         "start_date": now - timedelta(days=2),
         "end_date": now - timedelta(hours=1),
         "min_bid_increment": 10.0,
-        "item_id": items[0].id,
+        "item_id": items[0].id,  # Vintage Camera
         "user_id": sellers[0].id,
         "is_active": False
     })
 
-    # Active auction ending soon
+    # Gaming Console - ending in 2 minutes
+    console_end = now + timedelta(minutes=2)  # Changed to exactly 2 minutes    
     auctions_data.append({
-        "start_date": now - timedelta(days=1),
-        "end_date": now + timedelta(hours=2),
+        "start_date": now,  # Changed to start now instead of 1 day ago
+        "end_date": console_end,
         "min_bid_increment": 20.0,
-        "item_id": items[1].id,
+        "item_id": items[1].id,  # Gaming Console
         "user_id": sellers[1].id,
         "is_active": True
     })
 
-    # Active auction with plenty of time
+    # Antique Watch - ending in 6 hours
+    auctions_data.append({
+        "start_date": now - timedelta(days=1),
+        "end_date": now + timedelta(hours=6),
+        "min_bid_increment": 15.0,
+        "item_id": items[2].id,  # Antique Watch
+        "user_id": sellers[1].id,
+        "is_active": True
+    })
+
+    # Art Print - ending in 3 days
     auctions_data.append({
         "start_date": now - timedelta(hours=12),
         "end_date": now + timedelta(days=3),
-        "min_bid_increment": 15.0,
-        "item_id": items[2].id,
+        "min_bid_increment": 10.0,
+        "item_id": items[3].id,  # Art Print
         "user_id": sellers[2].id,
         "is_active": True
     })
 
-    # Future auction
+    # First Collectible Cards - future auction
     auctions_data.append({
         "start_date": now + timedelta(days=1),
         "end_date": now + timedelta(days=4),
         "min_bid_increment": 25.0,
-        "item_id": items[3].id,
+        "item_id": items[4].id,  # Collectible Cards
         "user_id": sellers[0].id,
         "is_active": True
     })
 
-    # Active auction with no bids yet
+    # Second Collectible Cards - ending in 2 days
     auctions_data.append({
         "start_date": now - timedelta(hours=6),
         "end_date": now + timedelta(days=2),
         "min_bid_increment": 30.0,
-        "item_id": items[4].id,
+        "item_id": items[4].id,  # Collectible Cards
         "user_id": sellers[1].id,
         "is_active": True
     })
@@ -272,12 +305,14 @@ def create_sample_auction(db: Session = Depends(get_db)):
 
     # Add bids to some auctions
     bids_data = [
-        # Bids for ended auction
+        # Bids for ended auction (Vintage Camera)
         {"auction_idx": 0, "amounts": [550.0, 600.0, 650.0]},
-        # Bids for active auction ending soon
+        # Bids for Gaming Console ending in 1 minute
         {"auction_idx": 1, "amounts": [450.0, 500.0]},
-        # Bids for active auction with plenty of time
+        # Bids for Antique Watch
         {"auction_idx": 2, "amounts": [350.0]},
+        # Bids for Art Print
+        {"auction_idx": 3, "amounts": [200.0]},
     ]
 
     created_bids = []
