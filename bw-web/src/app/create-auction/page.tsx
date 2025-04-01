@@ -29,6 +29,7 @@ export default function CreateAuctionPage() {
   const [imageUrl, setImageUrl] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>();
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,7 +136,7 @@ export default function CreateAuctionPage() {
                     id="initialPrice"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1"
                     value={initialPrice}
                     onChange={(e) => setInitialPrice(e.target.value)}
                     required
@@ -148,7 +149,7 @@ export default function CreateAuctionPage() {
                     id="minBidIncrement"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="1"
                     value={minBidIncrement}
                     onChange={(e) => setMinBidIncrement(e.target.value)}
                     required
