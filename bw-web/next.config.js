@@ -13,7 +13,9 @@ const nextConfig = {
       'cdn.shopify.com',
       'admissions.rochester.edu',
       'placekitten.com',
+      'www.google.com',
       'picsum.photos',
+      'matterhornmusic.ca', 
     ],
   },
 };

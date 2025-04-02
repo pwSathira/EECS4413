@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+//import DOMPurify from 'dompurify';
 import { cn } from "@/lib/utils";
 
 export default function CreateAuctionPage() {
@@ -32,8 +33,16 @@ export default function CreateAuctionPage() {
   
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!user) return;
+    const isValidImageUrl = (url: string) =>
+      /\.(jpeg|jpg|png|gif|webp|svg)$/.test(url.split('?')[0]);
+  
+    if (!isValidImageUrl(imageUrl)) {
+      toast.error("Image URL must end in .jpg, .png, .gif, etc.");
+      return;
+    }
 
     setLoading(true);
     try {
