@@ -204,31 +204,31 @@ def create_sample_auction(db: Session = Depends(get_db)):
             "name": "Vintage Camera",
             "description": "A rare 1960s Leica M3 in excellent condition",
             "initial_price": 500.0,
-            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+            "image_url": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=800&auto=format&fit=crop"
         },
         {
             "name": "Gaming Console",
             "description": "Latest generation gaming console, sealed in box",
             "initial_price": 400.0,
-            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+            "image_url": "https://images.unsplash.com/photo-1486401899868-0e435ed85128?q=80&w=800&auto=format&fit=crop"
         },
         {
             "name": "Antique Watch",
             "description": "1940s Swiss mechanical watch, recently serviced",
             "initial_price": 300.0,
-            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+            "image_url": "https://images.unsplash.com/photo-1524592094714-0f0654e20314?q=80&w=800&auto=format&fit=crop"
         },
         {
             "name": "Art Print",
             "description": "Limited edition print, signed by the artist",
             "initial_price": 200.0,
-            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+            "image_url": "https://picsum.photos/800/800"
         },
         {
             "name": "Collectible Cards",
             "description": "Complete set of rare trading cards",
             "initial_price": 150.0,
-            "image_url": "https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png?v=1530129081"
+            "image_url": "https://picsum.photos/800/720"
         }
     ]
 

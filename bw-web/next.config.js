@@ -16,6 +16,8 @@ const nextConfig = {
       'www.google.com',
       'picsum.photos',
       'matterhornmusic.ca', 
+      'images.unsplash.com',
+      'unsplash.com',
     ],
   },
 };
