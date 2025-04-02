@@ -15,6 +15,7 @@ from ..services.auction_service import (
 )
 from ..entities.auction import Auction, AuctionCreate, AuctionRead, AuctionUpdate
 from ..services.user import get_user_by_id, get_user_role, hash_password
+from ..services.email_service import send_hi_email, send_auction_end_notification
 
 router = APIRouter(
     prefix="/auctions",
@@ -123,6 +124,33 @@ def end_auction_manually(auction_id: int, db: Session = Depends(get_db)):
     if highest_bid:
         auction.winning_bid_id = highest_bid.id
         print(f"Setting winning bid {highest_bid.id} for auction {auction_id}")  # Debug log
+        
+        # Get the item details
+        item = db.get(Item, auction.item_id)
+        if not item:
+            print(f"Item {auction.item_id} not found")  # Debug log
+            raise HTTPException(status_code=404, detail="Item not found")
+            
+        # Get the winner and seller details
+        winner = db.get(User, highest_bid.user_id)
+        seller = db.get(User, auction.user_id)
+        
+        if not winner or not seller:
+            print("Winner or seller not found")  # Debug log
+            raise HTTPException(status_code=404, detail="Winner or seller not found")
+            
+        # Send email notifications
+        try:
+            email_response = send_auction_end_notification(
+                winner_email=winner.email,
+                seller_email=seller.email,
+                item_name=item.name,
+                winning_amount=highest_bid.amount
+            )
+            print("Email notifications sent:", email_response)  # Debug log
+        except Exception as e:
+            print(f"Failed to send email notifications: {str(e)}")  # Debug log
+            # Don't raise the exception - we still want to end the auction even if email fails
     else:
         print(f"No bids found for auction {auction_id}")  # Debug log
     
@@ -358,3 +386,20 @@ def create_sample_auction(db: Session = Depends(get_db)):
         "sellers_created": len(sellers),
         "bidders_created": len(bidders)
     }
+
+@router.post("/test/email", response_model=dict)
+def test_email_service():
+    """
+    Test route to verify email service functionality.
+    """
+    try:
+        response = send_hi_email()
+        return {
+            "message": "Test email sent successfully",
+            "email_response": response
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error sending test email: {str(e)}"
+        )

@@ -117,10 +117,6 @@ export default function AuctionsPage() {
       });
       
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || data.detail || 'Failed to end auction');
-      }
 
       // Refresh auctions after ending
       const updatedAuctions = await fetchAuctionsWithItems();
