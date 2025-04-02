@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Order } from "../../types/order";
+import { fetchUserOrders } from "@/api/order-api";
 
 export default function AuctionsPage() {
   const { user, loading: userLoading } = useUser();
@@ -52,9 +53,7 @@ export default function AuctionsPage() {
     const loadCompletedOrders = async () => {
       if (user) {
         try {
-          const response = await fetch(`/api/v1/orders/user/${user.id}`);
-          if (!response.ok) throw new Error('Failed to fetch orders');
-          const data = await response.json();
+          const data = await fetchUserOrders(user.id);
           setCompletedOrders(data);
         } catch (err) {
           console.error('Error loading completed orders:', err);
@@ -300,7 +299,7 @@ export default function AuctionsPage() {
             <CardHeader>
               <CardTitle>Order #{order.id}</CardTitle>
               <CardDescription>
-                {order.item?.name || 'Loading item details...'}
+                {order.item?.name || 'Item details not available'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

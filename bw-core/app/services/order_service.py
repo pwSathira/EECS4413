@@ -19,30 +19,18 @@ class OrderService:
         if not user:
             raise HTTPException(status_code=404, detail="Winner user not found")
 
-        # Retrieve the order related to this auction
+        # Retrieve the order related to this auction with item relationship
         order = (
             db.query(OrderModel)
             .filter(OrderModel.item_id == auction_data["item"]["id"])
+            .join(OrderModel.item)
             .first()
         )
         
         if not order:
             raise HTTPException(status_code=404, detail="Order not found for this auction's item")
 
-        # Return the formatted order details
-        order_response = OrderModel(
-            user_id=user.id, #getting user id 
-            user_name=user.username,
-            street_address=user.street,
-            phone_number=order.phone_number,
-            province=order.province,
-            country=user.country,
-            postal_code=user.postal_code,
-            total_paid=order.total_paid,
-            item_id=order.item_id
-        )
-
-        return order_response
+        return order
     
     
     # @staticmethod
