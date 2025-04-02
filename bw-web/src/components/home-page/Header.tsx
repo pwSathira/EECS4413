@@ -22,7 +22,8 @@ interface HeaderProps {
 
 export function Header({ searchQuery = "", onSearchChange }: HeaderProps) {
   const { user, logout } = useUser();
-  const router = useRouter(); // ✅ Added
+  const router = useRouter(); // ✅ Added]
+
 
   return (
     <header className="bg-white shadow-sm">
@@ -73,7 +74,9 @@ export function Header({ searchQuery = "", onSearchChange }: HeaderProps) {
                     }}
                   >
                     Profile
+                    
                   </DropdownMenuItem>
+                
                   {user.role === "buyer" && (
                     <DropdownMenuItem
                       onSelect={(e) => {
