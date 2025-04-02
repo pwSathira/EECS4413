@@ -284,6 +284,24 @@ export default function AuctionsPage() {
     );
   };
 
+  const handleEmailOrderDetails = async (orderId: number) => {
+    try {
+      const response = await fetch(`/api/v1/orders/${orderId}/email`, {
+        method: "POST",
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to send email");
+      }
+  
+      toast.success("Order details emailed successfully!");
+    } catch (err) {
+      console.error("Error sending email:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to send email");
+    }
+  };
+  
   const renderCompletedOrders = () => {
     if (!completedOrders.length) {
       return (
@@ -292,7 +310,7 @@ export default function AuctionsPage() {
         </div>
       );
     }
-
+  
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {completedOrders.map((order) => (
@@ -300,7 +318,7 @@ export default function AuctionsPage() {
             <CardHeader>
               <CardTitle>Order #{order.id}</CardTitle>
               <CardDescription>
-                {order.item?.name || 'Loading item details...'}
+                {order.item?.name || "Loading item details..."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -314,18 +332,28 @@ export default function AuctionsPage() {
                   <p className="font-semibold text-green-600">Completed</p>
                 </div>
               </div>
-              
+  
               <div className="space-y-2">
                 <div className="flex items-center text-sm text-muted-foreground">
                   <span>Shipping Address:</span>
                 </div>
                 <div className="text-sm">
                   <p>{order.street_address}</p>
-                  <p>{order.province}, {order.country}</p>
+                  <p>
+                    {order.province}, {order.country}
+                  </p>
                   <p>{order.postal_code}</p>
                 </div>
               </div>
             </CardContent>
+            <CardFooter className="mt-auto space-x-2">
+              <Button
+                variant="default"
+                onClick={() => handleEmailOrderDetails(order.id)}
+              >
+                Email Order Details
+              </Button>
+            </CardFooter>
           </Card>
         ))}
       </div>

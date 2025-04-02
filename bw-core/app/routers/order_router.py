@@ -5,6 +5,9 @@ from app.services.db import get_db
 from typing import List
 from app.entities.order import Order
 from sqlmodel import select
+from email.message import EmailMessage
+from aiosmtplib import send
+from app.models.order import Order  # Assuming you have an Order model
 
 router = APIRouter()
 
@@ -45,3 +48,48 @@ def create_order_from_auction(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.post("/orders/{order_id}/email")
+async def email_order_details(order_id: int, db: Session = Depends(get_db)):
+    """
+    Sends an email with the details of the specified order.
+    """
+    # Fetch the order details
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Create the email content
+    email_body = f"""
+    <h1>Order Details</h1>
+    <p><strong>Order ID:</strong> {order.id}</p>
+    <p><strong>Item:</strong> {order.item_name}</p>
+    <p><strong>Total Paid:</strong> ${order.total_paid:.2f}</p>
+    <p><strong>Shipping Address:</strong></p>
+    <p>{order.street_address}</p>
+    <p>{order.province}, {order.country}</p>
+    <p>{order.postal_code}</p>
+    """
+
+    # Create the email message
+    message = EmailMessage()
+    message["From"] = "your_email@example.com"  # Replace with your email
+    message["To"] = order.user.email  # Assuming the order has a user with an email
+    message["Subject"] = "Your Order Details"
+    message.set_content(email_body, subtype="html")
+
+    # Send the email using aiosmtplib
+    try:
+        await send(
+            message,
+            hostname="smtp.example.com",  # Replace with your SMTP server
+            port=587,  # Replace with your SMTP port
+            username="your_email@example.com",  # Replace with your email username
+            password="your_password",  # Replace with your email password
+            use_tls=True,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
+
+    return {"message": "Order details emailed successfully"}
