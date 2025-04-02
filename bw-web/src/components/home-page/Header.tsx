@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // ✅ Added
 import { useUser } from "@/contexts/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ interface HeaderProps {
 
 export function Header({ searchQuery = "", onSearchChange }: HeaderProps) {
   const { user, logout } = useUser();
+  const router = useRouter(); // ✅ Added
 
   return (
     <header className="bg-white shadow-sm">
@@ -64,16 +66,32 @@ export function Header({ searchQuery = "", onSearchChange }: HeaderProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">Profile</Link>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      router.push("/profile");
+                    }}
+                  >
+                    Profile
                   </DropdownMenuItem>
                   {user.role === "buyer" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/my-bids">My Bids</Link>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        router.push("/my-bids");
+                      }}
+                    >
+                      My Bids
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      logout();
+                    }}
+                    className="text-red-600"
+                  >
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
