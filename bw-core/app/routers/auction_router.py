@@ -64,7 +64,7 @@ def get_auctions_started_by_seller2(seller_id: int, db: Session = Depends(get_db
     auctions = get_auctions_by_seller(db, seller_id)
     if not auctions:
         raise HTTPException(status_code=404, detail="No auctions found for the given seller ID")
-    
+     
     return auctions
 
 @router.get("/startedby", response_model=List[AuctionRead])

@@ -234,7 +234,7 @@ export default function ProfilePage() {
                                 </div>
                                 {/* <p className="text-sm text-muted-foreground">
                                   Created At: {new Date(auction.created_at).toLocaleDateString()}
-                                </p> */}
+                                </p> */} 
                                 <p className="text-sm text-muted-foreground">
                                   Winning Bid ID: {auction.winning_bid_id || "No winning bid yet"}
                                 </p>

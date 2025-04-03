@@ -13,7 +13,7 @@ def check_auction_status(auction: Auction) -> bool:
     current_time = datetime.utcnow()
     return auction.end_date <= current_time
 
-
+ 
 def determine_winner(db: Session, auction_id: int) -> Optional[Dict[str, Any]]:
     """Determine the winner of an auction and update the auction record"""
     auction = db.get(Auction, auction_id)
