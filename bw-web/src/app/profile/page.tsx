@@ -16,11 +16,14 @@ import { fetchUserOrders } from "@/api/order-api";
 
 interface Auction {
   id: number;
-  title?: string;
-  name?: string;
-  type: "forward" | "dutch";
-  current_price: number;
-  status: string;
+  is_active: boolean;
+  created_at: string; // ISO date string
+  winning_bid_id?: number | null;
+  user_id: number;
+  item_id: number;
+  start_date: string; // ISO date string
+  end_date: string;   // ISO date string
+  min_bid_increment?: number;
 }
 
 export default function ProfilePage() {
@@ -32,7 +35,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user?.role === "seller") {
       axios
-        .get(`http://localhost:8000/api/v1/auctions?seller_id=${user.id}`)
+        .get(`http://localhost:8000/api/v1/auctions/startedby2?seller_id=${user.id}`)
         .then((res) => {
           console.log("Raw auctions API response:", res.data);
           setAuctions(res.data);
@@ -224,17 +227,25 @@ export default function ProfilePage() {
                           <CardContent className="pt-6">
                             <div className="flex justify-between items-start">
                               <div className="space-y-2">
-                                <h3 className="font-semibold">{auction.title || auction.name}</h3>
+                                <h3 className="font-semibold">Auction #{auction.id}</h3>
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                  <span>Type: {auction.type}</span>
-                                  <span>Status: {auction.status}</span>
+                                  <span>Start Date: {new Date(auction.start_date).toLocaleDateString()}</span>
+                                  <span>End Date: {new Date(auction.end_date).toLocaleDateString()}</span>
                                 </div>
+                                {/* <p className="text-sm text-muted-foreground">
+                                  Created At: {new Date(auction.created_at).toLocaleDateString()}
+                                </p> */}
+                                <p className="text-sm text-muted-foreground">
+                                  Winning Bid ID: {auction.winning_bid_id || "No winning bid yet"}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Min Bid Increment: ${auction.min_bid_increment?.toFixed(2) || "N/A"}
+                                </p>
                               </div>
                               <div className="text-right">
-                                <p className="text-lg font-semibold">${auction.current_price}</p>
-                                <Button variant="outline" size="sm" className="mt-2">
-                                  View Details
-                                </Button>
+                                <p className={`text-sm font-semibold ${auction.is_active ? "text-green-600" : "text-red-600"}`}>
+                                  {auction.is_active ? "Active" : "Inactive"}
+                                </p>
                               </div>
                             </div>
                           </CardContent>
@@ -245,7 +256,7 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             </TabsContent>
-          )}
+            )}
 
           <TabsContent value="history" className="mt-6">
             <Card>

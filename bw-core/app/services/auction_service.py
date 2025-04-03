@@ -4,6 +4,8 @@ from datetime import datetime
 from ..entities.auction import Auction
 from ..entities.bid import Bid
 from typing import Dict, Any, Optional
+from ..entities.auction import AuctionRead
+from typing import List
 
 
 def check_auction_status(auction: Auction) -> bool:
@@ -196,3 +198,36 @@ def get_auction_with_latest_bid(db: Session, auction_id: int) -> Optional[dict]:
             "created_at": auction.item.created_at
         }
     }
+
+def get_auctions_by_seller(db: Session, seller_id: int):
+    """
+    Fetch all auctions started by a specific seller.
+    """
+    query = select(Auction).where(Auction.user_id == seller_id)
+    auctions = db.exec(query).all()
+    return auctions
+
+def get_auctions_by_seller2(db: Session, seller_id: int) -> List[AuctionRead]:
+    """
+    Fetch all auctions started by a specific seller and return them as AuctionRead instances.
+    """
+    query = select(Auction).where(Auction.user_id == seller_id)
+    auctions = db.exec(query).all()
+
+    # Transform Auction SQLModel instances into AuctionRead instances
+    auction_reads = [
+        AuctionRead(
+            id=auction.id,
+            start_date=auction.start_date,
+            end_date=auction.end_date,
+            min_bid_increment=auction.min_bid_increment,
+            is_active=auction.is_active,
+            created_at=auction.created_at,
+            winning_bid_id=auction.winning_bid_id,
+            user_id=auction.user_id,
+            item_id=auction.item_id,
+        )
+        for auction in auctions
+    ]
+
+    return auction_reads

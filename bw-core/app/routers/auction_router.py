@@ -11,7 +11,9 @@ from ..services.auction_service import (
     determine_winner,
     process_ended_auctions,
     get_auction_with_winner,
-    get_auction_with_latest_bid
+    get_auction_with_latest_bid,
+    get_auctions_by_seller,
+    get_auctions_by_seller2
 )
 from ..entities.auction import Auction, AuctionCreate, AuctionRead, AuctionUpdate
 from ..services.user import get_user_by_id, get_user_role, hash_password
@@ -51,6 +53,33 @@ def read_auctions(
     auctions = db.exec(query.offset(skip).limit(limit)).all()
     return auctions
 
+@router.get("/startedby2", response_model=List[AuctionRead])
+def get_auctions_started_by_seller2(seller_id: int, db: Session = Depends(get_db)):
+    """
+    Fetch all auctions started by the seller with the given seller_id.
+    """
+    if not seller_id:
+        raise HTTPException(status_code=400, detail="Seller ID is required")
+    
+    auctions = get_auctions_by_seller(db, seller_id)
+    if not auctions:
+        raise HTTPException(status_code=404, detail="No auctions found for the given seller ID")
+    
+    return auctions
+
+@router.get("/startedby", response_model=List[AuctionRead])
+def get_auctions_started_by_seller(seller_id: int, db: Session = Depends(get_db)):
+    """
+    Fetch all auctions started by the seller with the given seller_id.
+    """
+    if not seller_id:
+        raise HTTPException(status_code=400, detail="Seller ID is required")
+    
+    auctions = get_auctions_by_seller(db, seller_id)
+    if not auctions:
+        raise HTTPException(status_code=404, detail="No auctions found for the given seller ID")
+    
+    return auctions
 
 @router.get("/{auction_id}", response_model=dict)
 def read_auction(auction_id: int, db: Session = Depends(get_db)):
@@ -403,3 +432,5 @@ def test_email_service():
             status_code=500,
             detail=f"Error sending test email: {str(e)}"
         )
+    
+
