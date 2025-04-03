@@ -43,6 +43,20 @@ def list_users(db: Session = Depends(get_db)):
     
     return user_list
 
+@router.get("/search/", response_model=List[UserResponse])
+def search_users(query: str, db: Session = Depends(get_db)):
+    users = search_users_in_db(db, query)
+    return users
+
+@router.get("/search2", response_model=bool)
+def check_user_by_email(email: str, db: Session = Depends(get_db)):
+    """Check if a user exists with the given email."""
+    return user_exists_by_email(db, email)
+
+@router.get("/search3", response_model=bool)
+def check_user_by_username(username: str, db: Session = Depends(get_db)):
+    """Check if a user exists with the given username."""
+    return user_exists_by_username(db, username)
 
 @router.get("/{user_id}", response_model=UserResponse)
 def read_user(user_id: int, db: Session = Depends(get_db)):
@@ -50,11 +64,6 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
-@router.get("/search/", response_model=List[UserResponse])
-def search_users(query: str, db: Session = Depends(get_db)):
-    users = search_users_in_db(db, query)
-    return users
-
 
 @router.post("/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):

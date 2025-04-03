@@ -93,3 +93,13 @@ def get_user_role(db: Session, user_id: int):
         return user.role
     return None
 
+
+def user_exists_by_email(db: Session, email: str) -> bool:
+    """Check if a user exists with the given email."""
+    statement = select(User).where(User.email == email)
+    return db.exec(statement).first() is not None
+
+def user_exists_by_username(db: Session, username: str) -> bool:
+    """Check if a user exists with the given username."""
+    statement = select(User).where(User.username == username)
+    return db.exec(statement).first() is not None

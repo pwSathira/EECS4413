@@ -13,24 +13,165 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Package, History, Settings } from "lucide-react";
 import { Order } from "@/types/order";
 import { fetchUserOrders } from "@/api/order-api";
+import { Modal } from "@/components/ui/modal"; 
+import { toast } from "sonner"; // For displaying success or error messages
 
 interface Auction {
   id: number;
   is_active: boolean;
-  created_at: string; // ISO date string
+  created_at: string; 
   winning_bid_id?: number | null;
   user_id: number;
   item_id: number;
-  start_date: string; // ISO date string
-  end_date: string;   // ISO date string
+  start_date: string; 
+  end_date: string;   
   min_bid_increment?: number;
 }
 
+interface User {
+  id: number;
+  email: string;
+  username: string;
+}
+
 export default function ProfilePage() {
+  const API_BASE_URL = "http://localhost:8000/api/v1";
   const { user } = useUser();
   const [auctions, setAuctions] = useState<Auction[] | null>(null);
   const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+
+  //variables for edit profile modal
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
+  const [formData, setFormData] = useState({
+    email: user?.email || "",
+    username: user?.username || "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false); // Submission loading state
+
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  const handleSubmit = async () => {
+    if (!formData.email || !formData.username) {
+      toast.error("Both email and username are required.");
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    setIsSubmitting(true);
+  
+    try {
+      console.log("Payload being sent:", {
+        email: formData.email,
+        username: formData.username,
+      });
+  
+      // Check if the email already exists
+      const emailExists = await axios.get(`${API_BASE_URL}/user/search2`, {
+        params: { email: formData.email },
+      });
+      
+      if (!user) {
+        toast.error("User is not logged in.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (emailExists.data && formData.email !== user.email) {
+        toast.error("Email already exists.");
+        setIsSubmitting(false);
+        return;
+      }
+  
+      // Check if the username already exists
+      const usernameExists = await axios.get(`${API_BASE_URL}/user/search3`, {
+        params: { username: formData.username },
+      });
+  
+      if (usernameExists.data && formData.username !== user.username) {
+        toast.error("Username already exists.");
+        setIsSubmitting(false);
+        return;
+      }
+  
+      // Call the update_user API
+      await axios.put(`${API_BASE_URL}/user/${user.id}`, {
+        params: {
+          email: formData.email,
+          username: formData.username,
+        },
+      });
+  
+      toast.success("Profile updated successfully!");
+      handleCloseModal();
+      window.location.reload(); // Refresh the page
+    } catch (error){
+      console.error("Error updating profile:", error);
+      if (axios.isAxiosError(error)) {
+        // Log Axios-specific error details
+        console.error("Axios error details:", error.response?.data || error.message);
+      } else {
+        // Log unexpected errors
+        console.error("Unexpected error:", error);
+      }
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // //Edit profile modal
+  // <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+  //   <div className="space-y-4">
+  //     <h2 className="text-lg font-semibold">Edit Profile</h2>
+  //     <div className="space-y-2">
+  //       <label htmlFor="username" className="block text-sm font-medium">
+  //         New Username
+  //       </label>
+  //       <input
+  //         id="username"
+  //         type="text"
+  //         value={formData.username}
+  //         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+  //         className="w-full border rounded px-3 py-2"
+  //         placeholder="Enter new username"
+  //       />
+  //     </div>
+  //     <div className="space-y-2">
+  //       <label htmlFor="email" className="block text-sm font-medium">
+  //         New Email
+  //       </label>
+  //       <input
+  //         id="email"
+  //         type="email"
+  //         value={formData.email}
+  //         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+  //         className="w-full border rounded px-3 py-2"
+  //         placeholder="Enter new email"
+  //       />
+  //     </div>
+  //     <div className="flex justify-end space-x-4">
+  //       <button
+  //         onClick={handleCloseModal}
+  //         className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+  //       >
+  //         Cancel
+  //       </button>
+  //       <button
+  //         onClick={handleSubmit}
+  //         disabled={isSubmitting}
+  //         className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+  //       >
+  //         {isSubmitting ? "Saving..." : "Save Changes"}
+  //       </button>
+  //     </div>
+  //   </div>
+  // </Modal>
 
   useEffect(() => {
     if (user?.role === "seller") {
@@ -197,7 +338,7 @@ export default function ProfilePage() {
                 </div>
                 <Separator />
                 <div className="flex justify-end">
-                  <Button variant="outline">Edit Profile</Button>
+                  <Button variant="outline" onClick={handleOpenModal}>Edit Profile</Button>
                 </div>
               </CardContent>
             </Card>
@@ -285,6 +426,55 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {isModalOpen && (
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Edit Profile</h2>
+          <div className="space-y-2">
+            <label htmlFor="username" className="block text-sm font-medium">
+              New Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Enter new username"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium">
+              New Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Enter new email"
+            />
+          </div>
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={handleCloseModal}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
 
       <Footer />
     </div>
