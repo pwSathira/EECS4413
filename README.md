@@ -15,7 +15,13 @@ To run the application using Docker:
    ```bash
    docker compose up --build
    ```
-
+4. To start application, run initdb route via backend api i.e. http://localhost:8000/docs
+5. To run a sample setup of the project run /api/v1/auctions/create-sample via backend api
+   - This will create sample users and auctions
+   - s1@test.com password: 123 role: seller
+   - s2@test.com password: 123 role: seller
+   - b1@test.com password: 123
+   - b2@test.com password 123
 The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
